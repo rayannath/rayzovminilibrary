@@ -359,7 +359,9 @@
     <!-- KATALOG + SEARCH + FILTER -->
     <section>
       <div class="section-header">
-        <div class="section-title">Semua Koleksi</div>
+        <div class="section-title">Semua Koleksi
+			<span id="totalBooksCount" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-left: 6px;">(Memuat...)</span>
+		</div>
       </div>
 
       <div class="search-container">
@@ -505,9 +507,12 @@
     }
 
     function renderAll() {
-      renderCarousel();
-      renderCatalog();
-    }
+	  // Update indikator total keseluruhan buku
+	  document.getElementById('totalBooksCount').innerText = `(${booksData.length} Buku)`;
+	
+	  renderCarousel();
+	  renderCatalog();
+	}
 
     function renderCarousel() {
       const carouselTrack = document.getElementById('carouselTrack');
@@ -529,37 +534,47 @@
     }
 
     function renderCatalog() {
-      const publicGrid = document.getElementById('public-grid');
-      let filteredBooks = booksData;
-
-      if (currentCategory !== 'Semua') {
-        filteredBooks = filteredBooks.filter(b => b.kategori.toLowerCase().trim() === currentCategory.toLowerCase().trim());
-      }
-
-      if (searchQuery !== '') {
-        filteredBooks = filteredBooks.filter(b => 
-          b.judul.toLowerCase().includes(searchQuery) ||
-          b.penulis.toLowerCase().includes(searchQuery) ||
-          b.kategori.toLowerCase().includes(searchQuery)
-        );
-      }
-
-      if (filteredBooks.length === 0) {
-        publicGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Buku yang dicari tidak ditemukan.</p>`;
-        return;
-      }
-
-      publicGrid.innerHTML = filteredBooks.map(book => `
-        <div class="book-card" onclick="openModal('${book.id}')">
-          <img src="${book.gambar}" class="book-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Cover'">
-          <div class="book-info">
-            <span class="book-category">${book.kategori}</span>
-            <div class="book-title">${book.judul}</div>
-            <div class="book-author">${book.penulis}</div>
-          </div>
-        </div>
-      `).join('');
-    }
+	  const publicGrid = document.getElementById('public-grid');
+	  let filteredBooks = booksData;
+	
+	  if (currentCategory !== 'Semua') {
+	    filteredBooks = filteredBooks.filter(b => b.kategori.toLowerCase().trim() === currentCategory.toLowerCase().trim());
+	  }
+	
+	  if (searchQuery !== '') {
+	    filteredBooks = filteredBooks.filter(b => 
+	      b.judul.toLowerCase().includes(searchQuery) ||
+	      b.penulis.toLowerCase().includes(searchQuery) ||
+	      b.kategori.toLowerCase().includes(searchQuery)
+	    );
+	  }
+	
+	  // Update statistik teks jumlah buku secara dinamis
+	  const totalElem = document.getElementById('totalBooksCount');
+	  if (totalElem) {
+	    if (filteredBooks.length === booksData.length) {
+	      totalElem.innerText = `(${booksData.length} Buku)`;
+	    } else {
+	      totalElem.innerText = `(${filteredBooks.length} dari ${booksData.length} Buku)`;
+	    }
+	  }
+	
+	  if (filteredBooks.length === 0) {
+	    publicGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Buku yang dicari tidak ditemukan.</p>`;
+	    return;
+	  }
+	
+	  publicGrid.innerHTML = filteredBooks.map(book => `
+	    <div class="book-card" onclick="openModal('${book.id}')">
+	      <img src="${book.gambar}" class="book-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Cover'">
+	      <div class="book-info">
+	        <span class="book-category">${book.kategori}</span>
+	        <div class="book-title">${book.judul}</div>
+	        <div class="book-author">${book.penulis}</div>
+	      </div>
+	    </div>
+	  `).join('');
+	}
 
     function openModal(id) {
       const book = booksData.find(b => b.id === id);
