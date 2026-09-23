@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rayzov's Mini Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FACC15;
+      --primary-hover: #EAB308;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); line-height: 1.5; padding-bottom: 60px; }
+
+    /* Header Navbar */
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+    }
+    .logo { font-size: 1.25rem; font-weight: 700; color: var(--text-main); text-decoration: none; }
+    .logo span { background: var(--primary); padding: 2px 8px; border-radius: 4px; margin-left: 4px; }
+
+    /* Container Utama */
+    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+
+    /* --- CAROUSEL BUKU TERBARU --- */
+    .carousel-section { margin-bottom: 2.5rem; }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .carousel-controls { display: flex; gap: 6px; }
+    .carousel-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+    .carousel-btn:hover { background: var(--primary); border-color: var(--primary); }
+
+    .carousel-container {
+      display: flex;
+      gap: 1.25rem;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .carousel-container::-webkit-scrollbar { display: none; }
+
+    .carousel-card {
+      min-width: 180px;
+      max-width: 180px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .carousel-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
+    .carousel-cover {
+      width: 100%;
+      height: 230px;
+      object-fit: cover;
+      background: #E2E8F0;
+    }
+    .carousel-info { padding: 0.85rem; }
+    .carousel-category { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+    .carousel-title {
+      font-size: 0.875rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    /* --- SEARCH & FILTER --- */
+    .search-container { margin-bottom: 1.25rem; }
+    .search-form { display: flex; gap: 8px; max-width: 600px; }
+    .search-input {
+      flex-grow: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      background: var(--card-bg);
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--text-main); }
+    .search-btn {
+      background: var(--primary);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .search-btn:hover { background: var(--primary-hover); }
+
+    .filter-container {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      scrollbar-width: thin;
+    }
+    .filter-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+    .filter-btn.active {
+      background: var(--text-main);
+      color: #FFFFFF;
+      border-color: var(--text-main);
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+    .book-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .book-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
+    .book-cover {
+      width: 100%;
+      height: 280px;
+      object-fit: cover;
+      background: #E2E8F0;
+    }
+    .book-info { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+    .book-category {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+    .book-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; color: var(--text-main); }
+    .book-author { font-size: 0.85rem; color: var(--text-muted); margin-top: auto; }
+
+    /* --- STYLES UNTUK LOADING ANIMASI --- */
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .skeleton-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+
+    .skeleton-cover {
+      width: 100%;
+      height: 280px;
+      background: #E2E8F0;
+    }
+
+    .skeleton-body {
+      padding: 1rem;
+    }
+
+    .skeleton-line {
+      height: 12px;
+      background: #E2E8F0;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .skeleton-line.short { width: 40%; }
+    .skeleton-line.title { height: 16px; width: 80%; }
+
+    /* Skeleton Khusus Carousel */
+	.skeleton-carousel-card {
+	  min-width: 180px;
+	  max-width: 180px;
+	  height: 290px;
+	  background: var(--card-bg);
+	  border: 1px solid var(--border);
+	  border-radius: 12px;
+	  overflow: hidden;
+	  flex-shrink: 0;
+	  animation: pulse 1.5s infinite ease-in-out;
+	}
+
+	.skeleton-carousel-cover {
+	  width: 100%;
+	  height: 230px;
+	  background: #E2E8F0;
+	}
+
+    /* Modal Detail Buku */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 12px;
+      max-width: 650px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .modal-body { display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; margin-top: 1rem; }
+    @media (max-width: 550px) { .modal-body { grid-template-columns: 1fr; } }
+    .modal-cover { width: 100%; border-radius: 8px; object-fit: cover; }
+    
+    .badge {
+      display: inline-block;
+      background: #F1F5F9;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .badge-pdf-available { background: #DCFCE7; color: #166534; }
+    .badge-pdf-unavailable { background: #FEE2E2; color: #991B1B; }
+
+    .btn-read-pdf {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: var(--text-main);
+      color: #FFFFFF;
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      margin-top: 0.75rem;
+      transition: opacity 0.2s;
+    }
+    .btn-read-pdf:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo">Rayzov's<span>Mini Library</span></a>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- CAROUSEL BUKU TERBARU -->
+    <section class="carousel-section">
+      <div class="section-header">
+        <div class="section-title">Buku Baru Ditambahkan</div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" onclick="scrollCarousel(-200)">&larr;</button>
+          <button class="carousel-btn" onclick="scrollCarousel(200)">&rarr;</button>
+        </div>
+      </div>
+      <div class="carousel-container" id="carouselTrack">
+        <!-- Temporary text selagi loading -->
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Memuat buku...</p>
+      </div>
+    </section>
+
+    <!-- KATALOG + SEARCH + FILTER -->
+    <section>
+      <div class="section-header">
+        <div class="section-title">Semua Koleksi</div>
+      </div>
+
+      <div class="search-container">
+        <form class="search-form" onsubmit="executeSearch(event)">
+          <input type="text" id="searchInput" class="search-input" placeholder="Cari judul buku, penulis, atau kategori..." oninput="handleRealtimeSearch()">
+          <button type="submit" class="search-btn">Cari Buku</button>
+        </form>
+      </div>
+      
+      <div class="filter-container" id="categoryFilter">
+        <button class="filter-btn active" onclick="filterCategory('Semua', this)">Semua</button>
+      </div>
+
+      <!-- KATALOG GRID & LOADING SKELETON -->
+      <div id="public-grid" class="catalog-grid">
+        <!-- Skeleton Card akan muncul otomatis di awal -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- MODAL DETAIL BUKU -->
+  <div id="bookModal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div class="modal-body">
+        <div>
+          <img id="modalCover" src="" class="modal-cover" alt="Cover">
+          <div id="modalPdfBtnContainer"></div>
+        </div>
+
+        <div>
+          <span id="modalKategori" class="badge"></span>
+          <span id="modalBahasa" class="badge"></span>
+          <span id="modalPdfBadge" class="badge"></span>
+
+          <h2 id="modalJudul" style="margin-top: 8px;"></h2>
+          <p id="modalPenulis" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 12px;"></p>
+          <p style="font-size: 0.8rem; margin-bottom: 12px;"><strong id="modalHalaman"></strong> Halaman</p>
+          <p id="modalSinopsis" style="font-size: 0.875rem; color: #334155; line-height: 1.6;"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqBd_AhKO682EVAon8f-J1RCzvnwvAhpHYaDwURhE693xg_GuV7LyAIJUi-XaqWnpX/exec";
+
+    let booksData = [];
+    let currentCategory = 'Semua';
+    let searchQuery = '';
+
+    // TAMPILKAN LOADING SKELETON DI CAROUSEL & GRID
+	function showLoadingSkeleton() {
+	  const publicGrid = document.getElementById('public-grid');
+	  const carouselTrack = document.getElementById('carouselTrack');
+
+	  // 1. Skeleton untuk Carousel Buku Terbaru (4 Kartu)
+	  let carouselSkeletons = '';
+	  for (let i = 0; i < 4; i++) {
+	    carouselSkeletons += `
+	      <div class="skeleton-carousel-card">
+		<div class="skeleton-carousel-cover"></div>
+		<div style="padding: 0.85rem;">
+		  <div class="skeleton-line short"></div>
+		  <div class="skeleton-line title"></div>
+		</div>
+	      </div>
+	    `;
+	  }
+	  carouselTrack.innerHTML = carouselSkeletons;
+
+	  // 2. Skeleton untuk Katalog Semua Koleksi (6 Kartu)
+	  let gridSkeletons = '';
+	  for (let i = 0; i < 6; i++) {
+	    gridSkeletons += `
+	      <div class="skeleton-card">
+		<div class="skeleton-cover"></div>
+		<div class="skeleton-body">
+		  <div class="skeleton-line short"></div>
+		  <div class="skeleton-line title"></div>
+		  <div class="skeleton-line short"></div>
+		</div>
+	      </div>
+	    `;
+	  }
+	  publicGrid.innerHTML = gridSkeletons;
+	}
+
+    function loadData() {
+      showLoadingSkeleton(); // Panggil animasi loading sebelum tarik data
+
+      const oldScript = document.getElementById('jsonp-script');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'jsonp-script';
+      script.src = `${SCRIPT_URL}?action=read&callback=handleReadResponse`;
+      document.body.appendChild(script);
+    }
+
+    // FUNGSI INI AKAN MEMATIKAN LOADING KETIKA DATA SELESAI DI-LOAD
+    function handleReadResponse(data) {
+      booksData = Array.isArray(data) ? data : [];
+      updateCategoryButtons();
+      renderAll(); // Menimpa Loading Skeleton dengan Data Buku Asli
+    }
+
+    function scrollCarousel(distance) {
+      document.getElementById('carouselTrack').scrollBy({ left: distance, behavior: 'smooth' });
+    }
+
+    function executeSearch(e) {
+      e.preventDefault();
+      searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+      renderCatalog();
+    }
+
+    function handleRealtimeSearch() {
+      searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+      renderCatalog();
+    }
+
+    function filterCategory(category, element) {
+      currentCategory = category;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      element.classList.add('active');
+      renderCatalog();
+    }
+
+    function updateCategoryButtons() {
+      const defaultCategories = ['Semua', 'Novel', 'Sejarah', 'Filsafat', 'Psikologi', 'Sains'];
+      const excelCategories = [...new Set(booksData.map(b => b.kategori.trim()).filter(Boolean))];
+      const allCategories = ['Semua', ...new Set([...defaultCategories.slice(1), ...excelCategories])];
+
+      const filterContainer = document.getElementById('categoryFilter');
+      filterContainer.innerHTML = allCategories.map(cat => `
+        <button class="filter-btn ${cat === currentCategory ? 'active' : ''}" 
+                onclick="filterCategory('${cat}', this)">
+          ${cat}
+        </button>
+      `).join('');
+    }
+
+    function renderAll() {
+      renderCarousel();
+      renderCatalog();
+    }
+
+    function renderCarousel() {
+      const carouselTrack = document.getElementById('carouselTrack');
+      if (booksData.length === 0) {
+        carouselTrack.innerHTML = '<p style="color: var(--text-muted); font-size: 0.875rem;">Belum ada buku terbaru.</p>';
+        return;
+      }
+
+      const recentBooks = booksData.slice(0, 6);
+      carouselTrack.innerHTML = recentBooks.map(book => `
+        <div class="carousel-card" onclick="openModal('${book.id}')">
+          <img src="${book.gambar}" class="carousel-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/180x230?text=No+Cover'">
+          <div class="carousel-info">
+            <div class="carousel-category">${book.kategori}</div>
+            <div class="carousel-title">${book.judul}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCatalog() {
+      const publicGrid = document.getElementById('public-grid');
+      let filteredBooks = booksData;
+
+      if (currentCategory !== 'Semua') {
+        filteredBooks = filteredBooks.filter(b => b.kategori.toLowerCase().trim() === currentCategory.toLowerCase().trim());
+      }
+
+      if (searchQuery !== '') {
+        filteredBooks = filteredBooks.filter(b => 
+          b.judul.toLowerCase().includes(searchQuery) ||
+          b.penulis.toLowerCase().includes(searchQuery) ||
+          b.kategori.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      if (filteredBooks.length === 0) {
+        publicGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Buku yang dicari tidak ditemukan.</p>`;
+        return;
+      }
+
+      publicGrid.innerHTML = filteredBooks.map(book => `
+        <div class="book-card" onclick="openModal('${book.id}')">
+          <img src="${book.gambar}" class="book-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Cover'">
+          <div class="book-info">
+            <span class="book-category">${book.kategori}</span>
+            <div class="book-title">${book.judul}</div>
+            <div class="book-author">${book.penulis}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openModal(id) {
+      const book = booksData.find(b => b.id === id);
+      if (!book) return;
+
+      document.getElementById('modalCover').src = book.gambar;
+      document.getElementById('modalJudul').innerText = book.judul;
+      document.getElementById('modalPenulis').innerText = `Penulis: ${book.penulis}`;
+      document.getElementById('modalKategori').innerText = book.kategori;
+      document.getElementById('modalBahasa').innerText = book.bahasa;
+      document.getElementById('modalHalaman').innerText = book.halaman;
+      document.getElementById('modalSinopsis').innerText = book.sinopsis;
+
+      const badgePdf = document.getElementById('modalPdfBadge');
+      const btnContainer = document.getElementById('modalPdfBtnContainer');
+
+      if (book.pdf && book.pdf.trim() !== '') {
+        badgePdf.className = 'badge badge-pdf-available';
+        badgePdf.innerText = 'PDF Tersedia';
+
+        btnContainer.innerHTML = `
+          <a href="${book.pdf}" target="_blank" rel="noopener noreferrer" class="btn-read-pdf">
+            📖 Baca Buku (PDF)
+          </a>
+        `;
+      } else {
+        badgePdf.className = 'badge badge-pdf-unavailable';
+        badgePdf.innerText = 'Tidak Ada PDF';
+        btnContainer.innerHTML = '';
+      }
+
+      document.getElementById('bookModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('bookModal').classList.remove('active');
+    }
+
+    // Jalankan pertama kali
+    loadData();
+  </script>
+</body>
+</html>

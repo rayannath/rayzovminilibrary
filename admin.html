@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Mini Library</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #FACC15;
+      --primary-hover: #EAB308;
+      --bg: #F8FAFC;
+      --card-bg: #FFFFFF;
+      --text-main: #0F172A;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg); color: var(--text-main); padding: 2rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    .btn-back { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 0.9rem; }
+    
+    .admin-layout { display: grid; grid-template-columns: 320px 1fr; gap: 2rem; }
+    @media (max-width: 768px) { .admin-layout { grid-template-columns: 1fr; } }
+
+    .form-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+    .form-group { margin-bottom: 0.85rem; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.875rem; outline: none; }
+    
+    .btn-submit { width: 100%; background: var(--primary); border: none; padding: 10px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+    .btn-cancel { width: 100%; background: transparent; border: 1px solid var(--border); padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 5px; }
+
+    .table-responsive { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+    th, td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    th { background: #F8FAFC; color: var(--text-muted); }
+    
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+    .badge-pdf-available { background: #DCFCE7; color: #166534; }
+    .badge-pdf-unavailable { background: #FEE2E2; color: #991B1B; }
+
+    .btn-action { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+    .btn-edit { background: #E2E8F0; color: var(--text-main); }
+    .btn-delete { background: #FEE2E2; color: #991B1B; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h2>Panel Admin Perpustakaan</h2>
+      <a href="index.html" class="btn-back">&larr; Kembali ke Katalog Utama</a>
+    </header>
+
+    <div class="admin-layout">
+      <!-- FORM INPUT/EDIT -->
+      <div class="form-card">
+        <h3 id="form-title" style="margin-bottom: 1rem;">Tambah Buku Baru</h3>
+        <form id="crudForm">
+          <input type="hidden" id="bookId">
+          <div class="form-group">
+            <label>Judul Buku</label>
+            <input type="text" id="inputJudul" required>
+          </div>
+          <div class="form-group">
+            <label>Penulis</label>
+            <input type="text" id="inputPenulis" required>
+          </div>
+          <div class="form-group">
+            <label>Kategori</label>
+            <input type="text" id="inputKategori" required>
+          </div>
+          <div class="form-group">
+            <label>Bahasa</label>
+            <input type="text" id="inputBahasa" required>
+          </div>
+          <div class="form-group">
+            <label>Halaman</label>
+            <input type="number" id="inputHalaman" required>
+          </div>
+          <div class="form-group">
+            <label>URL Gambar Cover</label>
+            <input type="url" id="inputGambar" required>
+          </div>
+          <div class="form-group">
+            <label>URL File PDF (Opsional)</label>
+            <input type="url" id="inputPdf" placeholder="https://...">
+          </div>
+          <div class="form-group">
+            <label>Sinopsis</label>
+            <textarea id="inputSinopsis" rows="3" required></textarea>
+          </div>
+          <button type="submit" id="submitBtn" class="btn-submit">Tambah Buku</button>
+          <button type="button" class="btn-cancel" onclick="resetForm()">Batal</button>
+        </form>
+      </div>
+
+      <!-- TABEL DATA BUKU -->
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Cover</th>
+              <th>Judul & Penulis</th>
+              <th>Status PDF</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="adminTableBody">
+            <tr><td colspan="4">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqBd_AhKO682EVAon8f-J1RCzvnwvAhpHYaDwURhE693xg_GuV7LyAIJUi-XaqWnpX/exec";
+    const ADMIN_PASSWORD = "admin123"; // GANTI PASSWORD DI SINI
+
+    let booksData = [];
+
+    function checkAuth() {
+      const pass = prompt("Masukkan password untuk mengakses Admin Panel:");
+      if (pass !== ADMIN_PASSWORD) {
+        alert("Akses ditolak! Password salah.");
+        window.location.href = "index.html";
+      } else {
+        loadData();
+      }
+    }
+
+    function loadData() {
+      const oldScript = document.getElementById('jsonp-script');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'jsonp-script';
+      script.src = `${SCRIPT_URL}?action=read&callback=handleReadResponse`;
+      document.body.appendChild(script);
+    }
+
+    function handleReadResponse(data) {
+      booksData = Array.isArray(data) ? data : [];
+      renderAdminTable();
+    }
+
+    function renderAdminTable() {
+      const adminBody = document.getElementById('adminTableBody');
+      if (booksData.length === 0) {
+        adminBody.innerHTML = '<tr><td colspan="4">Belum ada data.</td></tr>';
+        return;
+      }
+
+      adminBody.innerHTML = booksData.map(book => `
+        <tr>
+          <td><img src="${book.gambar}" width="40" height="55" style="object-fit:cover; border-radius:4px;" onerror="this.src='https://via.placeholder.com/40'"></td>
+          <td>
+            <strong>${book.judul}</strong><br>
+            <small style="color:var(--text-muted)">${book.penulis}</small>
+          </td>
+          <td>
+            ${book.pdf && book.pdf.trim() !== '' 
+              ? '<span class="badge badge-pdf-available">PDF Ada</span>' 
+              : '<span class="badge badge-pdf-unavailable">Tidak Ada PDF</span>'}
+          </td>
+          <td>
+            <button class="btn-action btn-edit" onclick="editBook('${book.id}')">Edit</button>
+            <button class="btn-action btn-delete" onclick="deleteBook('${book.id}')">Hapus</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    document.getElementById('crudForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const id = document.getElementById('bookId').value;
+      const isUpdate = Boolean(id);
+      const tempId = id || String(new Date().getTime());
+
+      const payload = {
+        id: tempId,
+        judul: document.getElementById('inputJudul').value,
+        penulis: document.getElementById('inputPenulis').value,
+        kategori: document.getElementById('inputKategori').value,
+        bahasa: document.getElementById('inputBahasa').value,
+        halaman: document.getElementById('inputHalaman').value,
+        gambar: document.getElementById('inputGambar').value,
+        pdf: document.getElementById('inputPdf').value,
+        sinopsis: document.getElementById('inputSinopsis').value
+      };
+
+      if (isUpdate) {
+        const idx = booksData.findIndex(b => b.id === id);
+        if (idx !== -1) booksData[idx] = payload;
+      } else {
+        booksData.unshift(payload);
+      }
+
+      renderAdminTable();
+      resetForm();
+
+      fetch(`${SCRIPT_URL}?action=${isUpdate ? 'update' : 'create'}`, {
+        method: 'POST',
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+    });
+
+    function editBook(id) {
+      const book = booksData.find(b => b.id === id);
+      if (!book) return;
+
+      document.getElementById('bookId').value = book.id;
+      document.getElementById('inputJudul').value = book.judul;
+      document.getElementById('inputPenulis').value = book.penulis;
+      document.getElementById('inputKategori').value = book.kategori;
+      document.getElementById('inputBahasa').value = book.bahasa;
+      document.getElementById('inputHalaman').value = book.halaman;
+      document.getElementById('inputGambar').value = book.gambar;
+      document.getElementById('inputPdf').value = book.pdf || '';
+      document.getElementById('inputSinopsis').value = book.sinopsis;
+
+      document.getElementById('form-title').innerText = 'Edit Buku';
+      document.getElementById('submitBtn').innerText = 'Simpan Perubahan';
+    }
+
+    function deleteBook(id) {
+      if (confirm('Hapus buku ini?')) {
+        booksData = booksData.filter(b => b.id !== id);
+        renderAdminTable();
+
+        fetch(`${SCRIPT_URL}?action=delete`, {
+          method: 'POST',
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ id })
+        });
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('bookId').value = '';
+      document.getElementById('crudForm').reset();
+      document.getElementById('form-title').innerText = 'Tambah Buku Baru';
+      document.getElementById('submitBtn').innerText = 'Tambah Buku';
+    }
+
+    // Jalankan proteksi autentikasi
+    checkAuth();
+  </script>
+</body>
+</html>
