@@ -144,8 +144,11 @@
     }
 
     function handleReadResponse(data) {
-      booksData = Array.isArray(data) ? data : [];
-      renderAdminTable();
+      // Balik urutan array agar data terbaru (terbawah di sheet) ada di posisi paling atas
+      booksData = Array.isArray(data) ? data.reverse() : [];
+      
+      // Panggil fungsi render tabel admin
+      renderAdminTable(); 
     }
 
     function renderAdminTable() {
