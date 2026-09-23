@@ -495,7 +495,7 @@
     }
 
     function updateCategoryButtons() {
-      const defaultCategories = ['Semua', 'Novel', 'Self Improvement', 'Sejarah', 'Filsafat', 'Psikologi', 'Sains', 'Sosiologi', 'Manajemen', 'Biografi'];
+      const defaultCategories = ['Semua', 'Novel', 'Self Improvement', 'Sejarah', 'Filsafat', 'Psikologi', 'Sains', 'Sosiologi', 'Keuangan', 'Biografi', 'Kesehatan', 'Matematika'];
       const excelCategories = [...new Set(booksData.map(b => b.kategori.trim()).filter(Boolean))];
       const allCategories = ['Semua', ...new Set([...defaultCategories.slice(1), ...excelCategories])];
 
