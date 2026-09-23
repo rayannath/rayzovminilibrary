@@ -459,17 +459,16 @@
 
   <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqBd_AhKO682EVAon8f-J1RCzvnwvAhpHYaDwURhE693xg_GuV7LyAIJUi-XaqWnpX/exec";
-
+  
     let booksData = [];
     let currentCategory = 'Semua';
     let searchQuery = '';
-
+  
     // TAMPILKAN LOADING SKELETON DI CAROUSEL & GRID
     function showLoadingSkeleton() {
       const publicGrid = document.getElementById('public-grid');
       const carouselTrack = document.getElementById('carouselTrack');
-
-      // 1. Skeleton untuk Carousel Buku Terbaru (4 Kartu)
+  
       let carouselSkeletons = '';
       for (let i = 0; i < 4; i++) {
         carouselSkeletons += `
@@ -483,8 +482,7 @@
         `;
       }
       carouselTrack.innerHTML = carouselSkeletons;
-
-      // 2. Skeleton untuk Katalog Semua Koleksi (6 Kartu)
+  
       let gridSkeletons = '';
       for (let i = 0; i < 6; i++) {
         gridSkeletons += `
@@ -500,54 +498,60 @@
       }
       publicGrid.innerHTML = gridSkeletons;
     }
-
+  
     function loadData() {
-      showLoadingSkeleton(); // Panggil animasi loading sebelum tarik data
-
+      showLoadingSkeleton();
+  
       const oldScript = document.getElementById('jsonp-script');
       if (oldScript) oldScript.remove();
-
+  
       const script = document.createElement('script');
       script.id = 'jsonp-script';
       script.src = `${SCRIPT_URL}?action=read&callback=handleReadResponse`;
+      
+      // Penanganan jika server/script Google Apps Script error
+      script.onerror = function() {
+        document.getElementById('public-grid').innerHTML = `<p style="grid-column: 1/-1; color: red;">Gagal memuat data dari Spreadsheet. Pastikan akses App Script diset ke 'Anyone'.</p>`;
+        document.getElementById('carouselTrack').innerHTML = `<p style="color: red;">Gagal memuat data.</p>`;
+      };
+  
       document.body.appendChild(script);
     }
-
-    // FUNGSI INI AKAN MEMATIKAN LOADING KETIKA DATA SELESAI DI-LOAD
+  
+    // FUNGSI RECEIVER DATA JSONP
     function handleReadResponse(data) {
-      // Membalik urutan array agar data terbawah di sheet tampil paling depan/atas
       booksData = Array.isArray(data) ? data.reverse() : [];
       updateCategoryButtons();
-      renderAll(); // Menimpa Loading Skeleton dengan Data Buku Asli
+      renderAll();
     }
-
+  
     function scrollCarousel(distance) {
       document.getElementById('carouselTrack').scrollBy({ left: distance, behavior: 'smooth' });
     }
-
+  
     function executeSearch(e) {
       e.preventDefault();
       searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
       renderCatalog();
     }
-
+  
     function handleRealtimeSearch() {
       searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
       renderCatalog();
     }
-
+  
     function filterCategory(category, element) {
       currentCategory = category;
       document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
       element.classList.add('active');
       renderCatalog();
     }
-
+  
     function updateCategoryButtons() {
       const defaultCategories = ['Semua', 'Novel', 'Sejarah', 'Filsafat', 'Psikologi', 'Sains'];
-      const excelCategories = [...new Set(booksData.map(b => b.kategori.trim()).filter(Boolean))];
+      const excelCategories = [...new Set(booksData.map(b => b.kategori ? b.kategori.trim() : '').filter(Boolean))];
       const allCategories = ['Semua', ...new Set([...defaultCategories.slice(1), ...excelCategories])];
-
+  
       const filterContainer = document.getElementById('categoryFilter');
       filterContainer.innerHTML = allCategories.map(cat => `
         <button class="filter-btn ${cat === currentCategory ? 'active' : ''}" 
@@ -556,52 +560,48 @@
         </button>
       `).join('');
     }
-
+  
     function renderAll() {
-      // Update indikator total keseluruhan buku
       document.getElementById('totalBooksCount').innerText = `(${booksData.length} Buku)`;
-    
       renderCarousel();
       renderCatalog();
     }
-
+  
     function renderCarousel() {
       const carouselTrack = document.getElementById('carouselTrack');
       if (booksData.length === 0) {
         carouselTrack.innerHTML = '<p style="color: var(--text-muted); font-size: 0.875rem;">Belum ada buku terbaru.</p>';
         return;
       }
-
-      // Mengambil 6 buku paling baru (urutan 6 terdepan setelah di-reverse)
+  
       const recentBooks = booksData.slice(0, 6);
       carouselTrack.innerHTML = recentBooks.map(book => `
         <div class="carousel-card" onclick="openModal('${book.id}')">
           <img src="${book.gambar}" class="carousel-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/180x230?text=No+Cover'">
           <div class="carousel-info">
-            <div class="carousel-category">${book.kategori}</div>
-            <div class="carousel-title">${book.judul}</div>
+            <div class="carousel-category">${book.kategori || ''}</div>
+            <div class="carousel-title">${book.judul || ''}</div>
           </div>
         </div>
       `).join('');
     }
-
+  
     function renderCatalog() {
       const publicGrid = document.getElementById('public-grid');
       let filteredBooks = booksData;
-    
+      
       if (currentCategory !== 'Semua') {
-        filteredBooks = filteredBooks.filter(b => b.kategori.toLowerCase().trim() === currentCategory.toLowerCase().trim());
+        filteredBooks = filteredBooks.filter(b => b.kategori && b.kategori.toLowerCase().trim() === currentCategory.toLowerCase().trim());
       }
-    
+      
       if (searchQuery !== '') {
         filteredBooks = filteredBooks.filter(b => 
-          b.judul.toLowerCase().includes(searchQuery) ||
-          b.penulis.toLowerCase().includes(searchQuery) ||
-          b.kategori.toLowerCase().includes(searchQuery)
+          (b.judul && b.judul.toLowerCase().includes(searchQuery)) ||
+          (b.penulis && b.penulis.toLowerCase().includes(searchQuery)) ||
+          (b.kategori && b.kategori.toLowerCase().includes(searchQuery))
         );
       }
-    
-      // Update statistik teks jumlah buku secara dinamis
+      
       const totalElem = document.getElementById('totalBooksCount');
       if (totalElem) {
         if (filteredBooks.length === booksData.length) {
@@ -610,43 +610,44 @@
           totalElem.innerText = `(${filteredBooks.length} dari ${booksData.length} Buku)`;
         }
       }
-    
+      
       if (filteredBooks.length === 0) {
         publicGrid.innerHTML = `<p style="grid-column: 1/-1; color: var(--text-muted);">Buku yang dicari tidak ditemukan.</p>`;
         return;
       }
-    
+      
       publicGrid.innerHTML = filteredBooks.map(book => `
         <div class="book-card" onclick="openModal('${book.id}')">
           <img src="${book.gambar}" class="book-cover" alt="${book.judul}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Cover'">
           <div class="book-info">
-            <span class="book-category">${book.kategori}</span>
-            <div class="book-title">${book.judul}</div>
-            <div class="book-author">${book.penulis}</div>
+            <span class="book-category">${book.kategori || ''}</span>
+            <div class="book-title">${book.judul || ''}</div>
+            <div class="book-author">${book.penulis || ''}</div>
           </div>
         </div>
       `).join('');
     }
-
+  
     function openModal(id) {
-      const book = booksData.find(b => b.id === id);
+      // String(b.id) digunakan agar perbandingan ID angka & string tetap valid
+      const book = booksData.find(b => String(b.id) === String(id));
       if (!book) return;
-
-      document.getElementById('modalCover').src = book.gambar;
-      document.getElementById('modalJudul').innerText = book.judul;
-      document.getElementById('modalPenulis').innerText = `Penulis: ${book.penulis}`;
-      document.getElementById('modalKategori').innerText = book.kategori;
-      document.getElementById('modalBahasa').innerText = book.bahasa;
-      document.getElementById('modalHalaman').innerText = book.halaman;
-      document.getElementById('modalSinopsis').innerText = book.sinopsis;
-
+  
+      document.getElementById('modalCover').src = book.gambar || 'https://via.placeholder.com/200x280?text=No+Cover';
+      document.getElementById('modalJudul').innerText = book.judul || '';
+      document.getElementById('modalPenulis').innerText = `Penulis: ${book.penulis || '-'}`;
+      document.getElementById('modalKategori').innerText = book.kategori || '-';
+      document.getElementById('modalBahasa').innerText = book.bahasa || '-';
+      document.getElementById('modalHalaman').innerText = book.halaman || '0';
+      document.getElementById('modalSinopsis').innerText = book.sinopsis || 'Tidak ada sinopsis.';
+  
       const badgePdf = document.getElementById('modalPdfBadge');
       const btnContainer = document.getElementById('modalPdfBtnContainer');
-
+  
       if (book.pdf && book.pdf.trim() !== '') {
         badgePdf.className = 'badge badge-pdf-available';
         badgePdf.innerText = 'PDF Tersedia';
-
+  
         btnContainer.innerHTML = `
           <a href="${book.pdf}" target="_blank" rel="noopener noreferrer" class="btn-read-pdf">
             📖 Baca Buku (PDF)
@@ -657,16 +658,16 @@
         badgePdf.innerText = 'Tidak Ada PDF';
         btnContainer.innerHTML = '';
       }
-
+  
       document.getElementById('bookModal').classList.add('active');
     }
-
+  
     function closeModal() {
       document.getElementById('bookModal').classList.remove('active');
     }
-
-    // Jalankan pertama kali
-    loadData();
+  
+    // JALANKAN OTOMATIS SAAT HALAMAN SELESAI DI-LOAD
+    document.addEventListener('DOMContentLoaded', loadData);
   </script>
 </body>
 </html>
