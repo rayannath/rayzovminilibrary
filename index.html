@@ -464,11 +464,13 @@
     }
 
     // FUNGSI INI AKAN MEMATIKAN LOADING KETIKA DATA SELESAI DI-LOAD
-    function handleReadResponse(data) {
-      booksData = Array.isArray(data) ? data : [];
-      updateCategoryButtons();
-      renderAll(); // Menimpa Loading Skeleton dengan Data Buku Asli
-    }
+	function handleReadResponse(data) {
+	  // Ambil data, balik urutannya (.reverse()) agar baris terbawah di Sheets jadi yang pertama
+	  booksData = Array.isArray(data) ? data.reverse() : [];
+	  
+	  updateCategoryButtons();
+	  renderAll(); // Menimpa Loading Skeleton dengan Data Buku Asli
+	}
 
     function scrollCarousel(distance) {
       document.getElementById('carouselTrack').scrollBy({ left: distance, behavior: 'smooth' });
